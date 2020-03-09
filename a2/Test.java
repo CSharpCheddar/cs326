@@ -5,10 +5,11 @@
 class Test extends AES {
   public static void main(String[] args) {
     String plaintext = "000102030405060708090A0B0C0D0E0F";
+    String key = "000102030405060708090A0B0C0D0E0F";
     System.out.println("\nEncrypting string " + plaintext + "...\n");
     printMatrix(hexStringToByteArray(plaintext));
     System.out.println();
-    int[][] ciphermatrix = encrypt(plaintext, plaintext);
+    int[][] ciphermatrix = encrypt(plaintext, key);
     printMatrix(ciphermatrix);
     System.out.println();
     String ciphertext = "";
@@ -22,7 +23,9 @@ class Test extends AES {
     }
     ciphertext = ciphertext.toUpperCase();
     System.out.println("Decrypting string " + ciphertext + "...\n");
-    int[][] plainmatrix = decrypt(ciphertext, plaintext);
+    printMatrix(hexStringToByteArray(ciphertext));
+    System.out.println();
+    int[][] plainmatrix = decrypt(ciphertext, key);
     String newplaintext = "";
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
@@ -33,6 +36,8 @@ class Test extends AES {
       }
     }
     newplaintext = newplaintext.toUpperCase();
+    printMatrix(hexStringToByteArray(newplaintext));
+    System.out.println();
     System.out.println("Final result: " + newplaintext);
     System.out.println("Result " + (newplaintext.equals(plaintext)
                        ? "equal" : "not equal") + ".\n");

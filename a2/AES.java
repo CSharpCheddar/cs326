@@ -336,10 +336,11 @@ class AES {
       for (int i = 4; i < 44; i++) {
         int temp = w[i - 1];
         if (i % 4 == 0) {
-          temp = (forwardSubstituteByte(rotWord(temp) >> 24) << 24)
-                 ^ (forwardSubstituteByte(rotWord(temp) >> 16) << 16)
-                 ^ (forwardSubstituteByte(rotWord(temp) >> 8) << 8)
-                 ^ forwardSubstituteByte(rotWord(temp))
+          temp = rotWord(temp);
+          temp = (forwardSubstituteByte(temp >> 24) << 24)
+                 ^ (forwardSubstituteByte(temp >> 16) << 16)
+                 ^ (forwardSubstituteByte(temp >> 8) << 8)
+                 ^ forwardSubstituteByte(temp)
                  ^ rCon(i / 4);
         }
         w[i] = w[i - 4] ^ temp;
