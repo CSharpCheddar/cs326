@@ -18,11 +18,11 @@ class Avalanche extends AES {
      *      leftPad("11110101") returns "11110101"
      */
     static String leftPad(String s) {
-        
-        /* To be completed */
-        
-        return "";  // here to please the compiler in the code handout
-
+      String string = new String(s);
+      for (int i = string.length(); i < 8; i++) {
+        string = "0" + string;
+      }
+      return string;
     }// leftPad method
     
     /* given an AES state array and a column number, return the string
@@ -37,10 +37,12 @@ class Avalanche extends AES {
      *  "11111111111111100000111100001010"
      */
     static String intArrayToBinString(int[][] data,int col) {
-        
-        /* To be completed */
-        
-        return "";  // here to please the compiler in the code handout
+      return Integer.toBinaryString(
+                                     (data[0][col] << 24)
+                                     ^ (data[1][col] << 16)
+                                     ^ (data[2][col] << 8)
+                                     ^ (data[3][col])
+                                   );
     }// intArrayToBinString method
 
     /* Given a round number and two AES state arrays, send to the standard
@@ -56,9 +58,71 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
                                                                              1
      */
     static void printRound(int num, int[][] s1, int[][] s2) {
-        
-        /* To be completed */
-        
+      // print round info
+      System.out.printf("Round %02d ", num);
+      // convert state arrays to binary strings
+      String first = "";
+      String second = "";
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          first += String.format("%8s", Integer.toBinaryString(s1[j][i]))
+                     .replace(' ', '0');
+          second += String.format("%8s", Integer.toBinaryString(s2[j][i]))
+                     .replace(' ', '0');
+        }
+      }
+      // first halves of state arrays
+      System.out.printf("%s %s\n", first.substring(0, 32),
+                        first.substring(32, 64));
+      System.out.printf("%41s %s\n%9s", second.substring(0, 32),
+                        second.substring(32, 64), "");
+      int n = 0;
+      for (int i = 0; i < 65; i++) {
+        if (i == 32) {
+          System.out.print(" ");
+        } else if (i < 32) {
+          if (first.charAt(i) == second.charAt(i)) {
+            System.out.print(" ");
+          } else {
+            System.out.print("*");
+            n++;
+          }
+        } else {
+          if (first.charAt(i - 1) == second.charAt(i - 1)) {
+            System.out.print(" ");
+          } else {
+            System.out.print("*");
+            n++;
+          }
+        }
+      }
+      System.out.printf(" %d\n", n);
+      // second halves of state arrays
+      System.out.printf("%41s %s\n", first.substring(64, 96),
+                        first.substring(96));
+      System.out.printf("%41s %s\n%9s", second.substring(64, 96),
+                        second.substring(96), "");
+      n = 0;
+      for (int i = 64; i < 129; i++) {
+        if (i == 96) {
+          System.out.print(" ");
+        } else if (i < 96) {
+          if (first.charAt(i) == second.charAt(i)) {
+            System.out.print(" ");
+          } else {
+            System.out.print("*");
+            n++;
+          }
+        } else {
+          if (first.charAt(i - 1) == second.charAt(i - 1)) {
+            System.out.print(" ");
+          } else {
+            System.out.print("*");
+            n++;
+          }
+        }
+      }
+      System.out.printf(" %d", n);
     }// printRound method
 
     /* Given a 128-bit AES key (as a 32-digit hexadecimal number) and two
@@ -69,9 +133,27 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
      * A3.
      */
     static void testEffect(String keyStr, String block1, String block2) {
-
-        /* To be completed */
-        
+      int[][] first = hexStringToByteArray(block1);
+      int[][] second = hexStringToByteArray(block2);
+      int[] key = expandKey(hexStringToByteArray(keyStr));
+      addRoundKey(first, key, 0);
+      addRoundKey(second, key, 0);
+      for (int i = 1; i <= 10; i++) {
+        forwardSubstituteBytes(first);
+        forwardSubstituteBytes(second);
+        shiftRows(first);
+        shiftRows(second);
+        if (i != 10) {
+          mixColumns(first);
+          mixColumns(second);
+        }
+        addRoundKey(first, key, i);
+        addRoundKey(second, key, i);
+        printRound(i, first, second);
+        if (i != 10) {
+          System.out.println();
+        }
+      }
     }// testEffect method
 
     /* This method will be used for testing. 
