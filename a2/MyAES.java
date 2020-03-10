@@ -309,7 +309,7 @@ class AES {
      *     rotWord( 0x01020304 ) returns 0x02030401
      */
     protected static int rotWord(int word) {
-      return  (word << 8) ^ ((word >> 24) & 255);
+      return  (word << 8) | ((word >>> 24) & 255);
     }// rotWord method
 
     /* Given an integer j between 1 and 10 (inclusive), return the
@@ -337,10 +337,10 @@ class AES {
         int temp = w[i - 1];
         if (i % 4 == 0) {
           temp = rotWord(temp);
-          temp = (forwardSubstituteByte(temp >> 24) << 24)
-                 ^ (forwardSubstituteByte(temp >> 16) << 16)
-                 ^ (forwardSubstituteByte(temp >> 8) << 8)
-                 ^ forwardSubstituteByte(temp)
+          temp = ((forwardSubstituteByte(temp >>> 24) << 24)
+                 | (forwardSubstituteByte(temp >>> 16) << 16)
+                 | (forwardSubstituteByte(temp >>> 8) << 8)
+                 | forwardSubstituteByte(temp))
                  ^ rCon(i / 4);
         }
         w[i] = w[i - 4] ^ temp;

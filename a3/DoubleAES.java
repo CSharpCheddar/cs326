@@ -19,11 +19,14 @@ class DoubleAES extends AES {
      * then the return value must be: "01020304050607080A0B0C0DFCFDFEFF"
      */     
     static String stateToString(int[][] state) {
-
-        /* To be completed */
-
-        return "";  // here to please the compiler in the code handout
-
+      StringBuilder sb = new StringBuilder("");
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          sb.append(String.format("%2S",
+                    Integer.toHexString(state[j][i])).replace(' ', '0'));
+        }
+      }
+      return sb.toString();
     }// stateToString method
     
     /* Given a pair of 128-bit keys (each represented by a 32-digit hexadecimal 
@@ -34,11 +37,7 @@ class DoubleAES extends AES {
      * not as a string.
      */
     static int[][] encryptDAES(String key1, String key2, String block) {
-
-        /* To be completed */
-
-        return null;  // here to please the compiler in the code handout
-
+      return encrypt(stateToString(encrypt(block, key1)), key2);
     }// encryptDAES method
 
     /* Given a pair of 128-bit keys (each represented by a 32-digit hexadecimal 
@@ -50,11 +49,7 @@ class DoubleAES extends AES {
      * not as a string.
      */
     static int[][] decryptDAES(String key1, String key2, String block) {
-
-        /* To be completed */
-
-        return null;  // here to please the compiler in the code handout
-
+      return decrypt(stateToString(decrypt(block, key2)), key1);
     }// decryptDAES method
 
     /* This method will be used for testing. 

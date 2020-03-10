@@ -18,11 +18,7 @@ class Avalanche extends AES {
      *      leftPad("11110101") returns "11110101"
      */
     static String leftPad(String s) {
-      String string = new String(s);
-      for (int i = string.length(); i < 8; i++) {
-        string = "0" + string;
-      }
-      return string;
+      return String.format("%8s", s).replace(' ', '0');
     }// leftPad method
     
     /* given an AES state array and a column number, return the string
@@ -37,12 +33,11 @@ class Avalanche extends AES {
      *  "11111111111111100000111100001010"
      */
     static String intArrayToBinString(int[][] data,int col) {
-      return Integer.toBinaryString(
-                                     (data[0][col] << 24)
-                                     ^ (data[1][col] << 16)
-                                     ^ (data[2][col] << 8)
-                                     ^ (data[3][col])
-                                   );
+      String s = "";
+      for (int i = 0; i < 4; i++) {
+        s += leftPad(Integer.toBinaryString(data[i][col]));
+      }
+      return s;
     }// intArrayToBinString method
 
     /* Given a round number and two AES state arrays, send to the standard
@@ -58,37 +53,34 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
                                                                              1
      */
     static void printRound(int num, int[][] s1, int[][] s2) {
-      // print round info
       System.out.printf("Round %02d ", num);
-      // convert state arrays to binary strings
-      String first = "";
-      String second = "";
-      for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-          first += String.format("%8s", Integer.toBinaryString(s1[j][i]))
-                     .replace(' ', '0');
-          second += String.format("%8s", Integer.toBinaryString(s2[j][i]))
-                     .replace(' ', '0');
-        }
-      }
-      // first halves of state arrays
-      System.out.printf("%s %s\n", first.substring(0, 32),
-                        first.substring(32, 64));
-      System.out.printf("%41s %s\n%9s", second.substring(0, 32),
-                        second.substring(32, 64), "");
       int n = 0;
-      for (int i = 0; i < 65; i++) {
-        if (i == 32) {
-          System.out.print(" ");
-        } else if (i < 32) {
-          if (first.charAt(i) == second.charAt(i)) {
+      for (int i = 0; i < 2; i++) {
+        if (i != 0) {
+          System.out.printf("\n%9s", "");
+        }
+        String first1 = intArrayToBinString(s1, 2*i);
+        String first2 = intArrayToBinString(s1, 2*i + 1);
+        String second1 = intArrayToBinString(s2, 2*i);
+        String second2 = intArrayToBinString(s2, 2*i + 1);
+        System.out.printf("%s %s\n%41s %s\n%9s",
+                          first1,
+                          first2,
+                          second1,
+                          second2,
+                          ""
+                         );
+        for (int j = 0; j < first1.length(); j++) {
+          if (first1.charAt(j) == second1.charAt(j)) {
             System.out.print(" ");
           } else {
             System.out.print("*");
             n++;
           }
-        } else {
-          if (first.charAt(i - 1) == second.charAt(i - 1)) {
+        }
+        System.out.print(" ");
+        for (int j = 0; j < first2.length(); j++) {
+          if (first2.charAt(j) == second2.charAt(j)) {
             System.out.print(" ");
           } else {
             System.out.print("*");
@@ -96,33 +88,7 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
           }
         }
       }
-      System.out.printf(" %d\n", n);
-      // second halves of state arrays
-      System.out.printf("%41s %s\n", first.substring(64, 96),
-                        first.substring(96));
-      System.out.printf("%41s %s\n%9s", second.substring(64, 96),
-                        second.substring(96), "");
-      n = 0;
-      for (int i = 64; i < 129; i++) {
-        if (i == 96) {
-          System.out.print(" ");
-        } else if (i < 96) {
-          if (first.charAt(i) == second.charAt(i)) {
-            System.out.print(" ");
-          } else {
-            System.out.print("*");
-            n++;
-          }
-        } else {
-          if (first.charAt(i - 1) == second.charAt(i - 1)) {
-            System.out.print(" ");
-          } else {
-            System.out.print("*");
-            n++;
-          }
-        }
-      }
-      System.out.printf(" %d", n);
+      System.out.printf(" %3s\n", Integer.toString(n));
     }// printRound method
 
     /* Given a 128-bit AES key (as a 32-digit hexadecimal number) and two
@@ -138,6 +104,7 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
       int[] key = expandKey(hexStringToByteArray(keyStr));
       addRoundKey(first, key, 0);
       addRoundKey(second, key, 0);
+      printRound(0, first, second);
       for (int i = 1; i <= 10; i++) {
         forwardSubstituteBytes(first);
         forwardSubstituteBytes(second);
@@ -150,9 +117,6 @@ Round 00 00001110001101100011010010101110 11001110011100100010010110110110
         addRoundKey(first, key, i);
         addRoundKey(second, key, i);
         printRound(i, first, second);
-        if (i != 10) {
-          System.out.println();
-        }
       }
     }// testEffect method
 

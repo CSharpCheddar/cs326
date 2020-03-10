@@ -130,14 +130,10 @@ class AES {
      */
     protected static int[][] hexStringToByteArray(String hex) {
       int[][] array = new int[4][4];
-      for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-          if (i == 3 && j == 3) {
-            array[j][i] = Integer.parseInt(hex.substring(31), 16);
-          } else {
-            array[j][i] = Integer.parseInt(hex.substring((8 * i) + (2 * j),
-                                           (8 * i) + (2 * j) + 2), 16);
-          }
+      for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+          array[j][i] = Integer.parseInt(hex.substring(0,2), 16);
+          hex = hex.substring(2);
         }
       }
       return array;
@@ -153,7 +149,7 @@ class AES {
     /* Given a byte value, return twice that value in GF(256).
      */
     protected static int times2(int value) {
-      if (((value >> 7) & 1) == 1) {
+      if (((value >>> 7) & 1) == 1) {
         return ((value << 1) ^ 27) & 255;
       } else {
         return value << 1;
@@ -165,9 +161,9 @@ class AES {
      * the two previous methods.
      */    
     protected static int times(int v1, int v2) {
-      int result = (v1 >> 7) & 1;
+      int result = (v1 >>> 7) & 1;
       for (int i = 6; i >= 0; i--) {
-        if (((v1 >> i) & 1) == 1) {
+        if (((v1 >>> i) & 1) == 1) {
           result = add(times2(result), v2);
         } else {
           result = times2(result);
@@ -180,7 +176,7 @@ class AES {
      * according to the AES S-box.
      */
     protected static int forwardSubstituteByte(int byteValue) {
-      return sBox[(byteValue >> 4) & 15][byteValue & 15];
+      return sBox[(byteValue >>> 4) & 15][byteValue & 15];
     }// forwardSubstituteByte method
 
     /* Modify the given State array by replacing each one of its byte
@@ -198,7 +194,7 @@ class AES {
      * according to the AES inverse S-box.
      */
     protected static int inverseSubstituteByte(int byteValue) {
-      return invSBox[(byteValue >> 4) & 15][byteValue & 15];
+      return invSBox[(byteValue >>> 4) & 15][byteValue & 15];
     }// inverseSubstituteByte method
 
     /* Modify the given State array by replacing each one of its byte
@@ -287,9 +283,9 @@ class AES {
      */
     protected static void addRoundKey(int[][] state, int[] w, int round) {
       for (int i = 0; i < 4; i++) {
-        state[0][i] = add(state[0][i], ((w[4 * round + i] >> 24) & 255));
-        state[1][i] = add(state[1][i], ((w[4 * round + i] >> 16) & 255));
-        state[2][i] = add(state[2][i], ((w[4 * round + i] >> 8) & 255));
+        state[0][i] = add(state[0][i], ((w[4 * round + i] >>> 24) & 255));
+        state[1][i] = add(state[1][i], ((w[4 * round + i] >>> 16) & 255));
+        state[2][i] = add(state[2][i], ((w[4 * round + i] >>> 8) & 255));
         state[3][i] = add(state[3][i], (w[4 * round + i] & 255));
       }
     }// addRoundKey method
@@ -304,12 +300,9 @@ class AES {
       addRoundKey(state, w, 10 - round);
     }// inverseAddRoundKey method
 
-    /* Given a 4-byte value, return the 4-byte value obtained by cyclically
-     * shifting the input by one byte to the left. For example:
-     *     rotWord( 0x01020304 ) returns 0x02030401
-     */
     protected static int rotWord(int word) {
-      return  (word << 8) ^ ((word >> 24) & 255);
+      int tmp = (word  & 0xFF000000) >>> 24;
+      return (word << 8) | tmp;
     }// rotWord method
 
     /* Given an integer j between 1 and 10 (inclusive), return the
@@ -317,7 +310,7 @@ class AES {
      * the right of the RC value at index j.
      */
     protected static int rCon(int j) {
-      return RC[j] << 24;
+        return RC[j] << 24;
     }// rCon method
 
     /* Given a 4x4 2D array of byte values (i.e., the AES key arranged
@@ -327,27 +320,35 @@ class AES {
      *                  { k3, k7, k11, k15 } }
      * return a 44-word array according to the Key Expansion algorithm.
      */
+    /* Given a 4x4 2D array of byte values (i.e., the AES key arranged
+     * in columns):   { { k0, k4,  k8, k12 },
+     *                  { k1, k5,  k9, k13 },
+     *                  { k2, k6, k10, k14 },
+     *                  { k3, k7, k11, k15 } }
+     * return a 44-word array according to the Key Expansion algorithm.
+     */
     protected static int[] expandKey(int[][] key) {
       int[] w = new int[44];
-      for (int i = 0; i < 4; i++) {
-        w[i] = (key[0][i] << 24) ^ (key[1][i] << 16)
-               ^ (key[2][i] << 8) ^ (key[3][i]);
+      int tmp;
+      for(int i = 0; i < 4; i++) {
+      w[i] = ((((key[0][i] << 8) | key[1][i]) << 8 |
+                 key[2][i]) << 8) | key[3][i];
       }
-      for (int i = 4; i < 44; i++) {
-        int temp = w[i - 1];
-        if (i % 4 == 0) {
-          temp = rotWord(temp);
-          temp = (forwardSubstituteByte(temp >> 24) << 24)
-                 ^ (forwardSubstituteByte(temp >> 16) << 16)
-                 ^ (forwardSubstituteByte(temp >> 8) << 8)
-                 ^ forwardSubstituteByte(temp)
-                 ^ rCon(i / 4);
+      for(int i = 4; i < 44; i++) {
+        tmp = w[i - 1];
+        if(i % 4 == 0) {
+          int rot = rotWord(tmp);
+          int b0 = forwardSubstituteByte((rot & 0xFF000000) >>> 24);
+          int b1 = forwardSubstituteByte((rot & 0x00FF0000) >>> 16);
+          int b2 = forwardSubstituteByte((rot & 0x0000FF00) >>> 8);
+          int b3 = forwardSubstituteByte(rot  & 0x000000FF);
+          tmp = ((b0 << 24) | (b1 << 16) | (b2 << 8) | b3) ^ rCon(i/4);
         }
-        w[i] = w[i - 4] ^ temp;
+        w[i] = w[i - 4] ^ tmp;
       }
       return w;
     }// expandKey method
-
+    
     /* Given a 16-byte hexadecimal number (the plaintext block) represented as 
      * a String (e.g., "000102030405060708090A0B0C0D0E0F"), and a 16-byte 
      * hexadecimal number (the AES key) with the same representation, return
