@@ -13,11 +13,7 @@ class BruteForce extends DoubleAES {
      * Note: you can assume that the length of the input is a multiple of 4.
      */
     static String binStringToHex(String bits) {
-        
-        /* To be completed */
-
-        return "";  // here to please the compiler in the code handout
-
+      return Integer.toString(Integer.parseInt(bits, 2), 16);
     }// binStringToHex method
 
     /* Given two plaintext-ciphertext pairs and the number numBits of
@@ -34,9 +30,33 @@ class BruteForce extends DoubleAES {
     {
         long startTime, elapsedTime;
         startTime = System.currentTimeMillis();
-
-        /* To be completed */
-
+        String pk1 = "";
+        String pk2 = "";
+        String possible1 = "";
+        String possible2 = "";
+        for (int key1 = 0; key1 < Math.pow(2, numBits); key1++) {
+          for (int key2 = 0; key2 < Math.pow(2, numBits); key2++) {
+            pk1 = String.format("%32S",
+                                Integer.toHexString(key1)).replace(' ', '0');
+            pk2 = String.format("%32S",
+                                Integer.toHexString(key2)).replace(' ', '0');
+            possible1 = stateToString(encryptDAES(pk1, pk2, plaintext1));
+            possible2 = stateToString(encryptDAES(pk1, pk2, plaintext2));
+            if (possible1.equals(ciphertext1)
+                && possible2.equals(ciphertext2)) {
+              break;
+            }
+          }
+          if (possible1.equals(ciphertext1)
+              && possible2.equals(ciphertext2)) {
+            break;
+          }
+        }
+        pk1 = pk1.toLowerCase();
+        pk2 = pk2.toLowerCase();
+        System.out.printf("%45s %s  time = ", pk1, pk2);
+        elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.print( (elapsedTime/1000.0) + "s\n" );
     }// bruteForce method
 
     /* Given a test number and a number of bits, this method returns an

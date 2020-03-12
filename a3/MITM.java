@@ -24,9 +24,31 @@ class MITM extends BruteForce {
 
         long startTime, elapsedTime;
         startTime = System.currentTimeMillis();
-
-        /* To be completed */
-
+        String pk1 = "";
+        String pk2 = "";
+        HashMap<String, String> hm = new HashMap<>();
+        for (int key1 = 0; key1 < Math.pow(2, numBits); key1++) {
+          pk1 = String.format("%32S",
+                              Integer.toHexString(key1)).replace(' ', '0');
+          hm.put(stateToString(encrypt(plaintext1, pk1)), pk1);
+        }
+        for (int key2 = 0; key2 < Math.pow(2, numBits); key2++) {
+          pk2 = String.format("%32S",
+                              Integer.toHexString(key2)).replace(' ', '0');
+          String possible = stateToString(decrypt(ciphertext1, pk2));
+          if (hm.containsKey(possible)) {
+            pk1 = hm.get(possible);
+            String possible2 = stateToString(encryptDAES(pk1, pk2, plaintext2));
+            if (possible2.equals(ciphertext2)) {
+              break;
+            }
+          }
+        }
+        pk1 = pk1.toLowerCase();
+        pk2 = pk2.toLowerCase();
+        System.out.printf("%45s %s  time = ", pk1, pk2);
+        elapsedTime = System.currentTimeMillis() - startTime;
+        System.out.print( (elapsedTime/1000.0) + "s\n" );
     }// meetInTheMiddle method
     
     /* This code is used for testing purposes.  This driver code
