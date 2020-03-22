@@ -73,7 +73,7 @@ class ImageCipher {
       for (int i = 0; i < 16; i++) {
         int n = s.nextInt();
         for (int j = 0; j < 8; j++) {
-          block[16 * i + j] = (n >> (7 - j)) & 1;
+          block[8 * i + j] = (n >> (7 - j)) & 1;
         }
       }
     }// readBlock method
@@ -83,18 +83,22 @@ class ImageCipher {
      * variable called 'block'
      */
     static void writeBlock(PrintWriter w) throws Exception {
-
-        /* To be completed */
-
+      for (int i = 0; i < 16; i++) {
+        int n = 0;
+        for (int j = 0; j < 8; j++) {
+          n = n | (block[8 * i + j] << (7 - j));
+        }
+        w.write(n);
+      }
     }// writeBlock method
 
     /* Given a Scanner object and a PrintWriter object, copy to the latter
      * the first four lines of the former.
      */
     static void processHeader(Scanner s, PrintWriter w) throws Exception {
-
-        /* To be completed */
-
+      for (int i = 0; i < 4; i++) {
+        w.write(s.next());
+      }
     }// processHeader method
 
     /* Given a file name (with no extension) for a PGM image and an
