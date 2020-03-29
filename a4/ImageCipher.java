@@ -96,9 +96,11 @@ class ImageCipher {
      * the first four lines of the former.
      */
     static void processHeader(Scanner s, PrintWriter w) throws Exception {
+      s.useDelimiter("\\n");
       for (int i = 0; i < 4; i++) {
         w.write(s.next());
       }
+      s.reset();
     }// processHeader method
 
     /* Given a file name (with no extension) for a PGM image and an

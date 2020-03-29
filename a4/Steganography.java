@@ -1,7 +1,6 @@
 /*****************************************************
    CS 326 - Spring 2020 - Assignment #4
-   Student's full name: <Your name goes here>
-                        <Your name goes here> 
+   Student's full name(s): Martin Mueller
 *****************************************************/
 
 import java.util.*;
@@ -13,25 +12,28 @@ class Steganography {
 
     // block size in bits
     static final int BSIZE = 128;
-    
+
     // used to store the next block read from or written to the image file
     static int[] block =  new int[BSIZE];
-    
-    // file extension for all image files in this assignment (you MUST use 
+
+    // file extension for all image files in this assignment (you MUST use
     // this constant everywhere instead of the string itself)
     static final String EXT = ".pgm";
 
     // number of rows and columns of pixels in the current image
     static int numRows, numCols;
-    
+
     /* Given a scanner object, read the next 16 integers from it and
      * store the 16 corresponding 8-bit patterns into the 128-bit
      * instance variable called 'block'
      */
     static void readBlock(Scanner s) throws Exception {
-
-        /* To be completed */
-        
+      for (int i = 0; i < 16; i++) {
+        int n = s.nextInt();
+        for (int j = 0; j < 8; j++) {
+          block[8 * i + j] = (n >> (7 - j)) & 1;
+        }
+      }
     }// readBlock method
 
     /* Given a PrintWriter object, write to it the 16 integers stored
@@ -39,9 +41,13 @@ class Steganography {
      * variable called 'block'
      */
     static void writeBlock(PrintWriter w) throws Exception {
-
-        /* To be completed */
-        
+      for (int i = 0; i < 16; i++) {
+        int n = 0;
+        for (int j = 0; j < 8; j++) {
+          n = n | (block[8 * i + j] << (7 - j));
+        }
+        w.write(n);
+      }
     }// writeBlock method
 
     /* Given a Scanner object and a PrintWriter object, copy to the
@@ -50,18 +56,26 @@ class Steganography {
      * third line.
      */
     static void processHeader(Scanner s, PrintWriter w) throws Exception {
-
-        /* To be completed */
-        
+      for (int i = 0; i < 4; i++) {
+        int n = s.nextInt();
+        w.write(n);
+        if (i == 2) {
+          numRows = n;
+          n = s.nextInt();
+          numCols = n;
+        }
+      }
     }// processHeader method
 
     /* Given a Scanner object, read and ignore the first four lines of
      * the corresponding file.
      */
     static void skipHeader(Scanner s) throws Exception {
-
-        /* To be completed */
-        
+      s.useDelimiter("\\n");
+      for (int i = 0; i < 4; i++) {
+        s.next();
+      }
+      s.reset();
     }// skipHeader method
 
     /* Given a two-character String (in ASCII), encode its 16 bits in
@@ -71,7 +85,7 @@ class Steganography {
     static void encode(String message) {
 
         /* To be completed */
-        
+
     }// encode method
 
     /* Read out the least significant bit of the 16 bytes contained in
@@ -92,7 +106,7 @@ class Steganography {
      * image. The details of the required encoding are given in the
      * handout. The resulting image must be stored in a file whose
      * name is equal to
-     * filename + "_steg" + EXT 
+     * filename + "_steg" + EXT
      * You can assume that the length of the input message is even.
      * This method must check that the whole message can fit in
      * encoded form in the input image. If that is not the case, it
@@ -102,7 +116,7 @@ class Steganography {
     static void writeImage(String message, String filename) {
 
         /* To be completed */
-        
+
     }// write method
 
     /* Given an image file name (without the extension), read in the
@@ -114,17 +128,17 @@ class Steganography {
     static void readImage(String filename) {
 
         /* To be completed */
-        
+
     }// read method
-    
-    /* This is the driver code used for testing purposes. 
-     * Do NOT modify it. 
+
+    /* This is the driver code used for testing purposes.
+     * Do NOT modify it.
      */
     public static void main(String[] args) {
         if (args.length < 2 || args.length > 3) {
             System.out.println("Usage: java Steganography -w " +
                                "<image file name without .pgm> <message>");
-            System.out.println("or");        
+            System.out.println("or");
             System.out.println("Usage: java Steganography -r " +
                                "<image file name without .pgm>");
             System.exit(1);
