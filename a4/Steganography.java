@@ -46,7 +46,7 @@ class Steganography {
         for (int j = 0; j < 8; j++) {
           n = n | (block[8 * i + j] << (7 - j));
         }
-        w.write(n);
+        w.printf("%3d\n", n);
       }
     }// writeBlock method
 
@@ -57,12 +57,12 @@ class Steganography {
      */
     static void processHeader(Scanner s, PrintWriter w) throws Exception {
       for (int i = 0; i < 4; i++) {
-        int n = s.nextInt();
-        w.write(n);
+        String line = s.nextLine();
+        w.println(line);
         if (i == 2) {
-          numRows = n;
-          n = s.nextInt();
-          numCols = n;
+          String[] array = line.split(" ");
+          numRows = Integer.parseInt(array[0]);
+          numCols = Integer.parseInt(array[1]);
         }
       }
     }// processHeader method
@@ -71,11 +71,9 @@ class Steganography {
      * the corresponding file.
      */
     static void skipHeader(Scanner s) throws Exception {
-      s.useDelimiter("\\n");
       for (int i = 0; i < 4; i++) {
-        s.next();
+        s.nextLine();
       }
-      s.reset();
     }// skipHeader method
 
     /* Given a two-character String (in ASCII), encode its 16 bits in
@@ -83,9 +81,12 @@ class Steganography {
      * variable.
      */
     static void encode(String message) {
-
-        /* To be completed */
-
+      for (int i = 0; i < message.length(); i++) {
+        int n = (int)message.charAt(i);
+        for (int j = 0; j < 8; j++) {
+          block[64 * i + 8 * j + 7] = (n >> (7 - j)) & 1;
+        }
+      }
     }// encode method
 
     /* Read out the least significant bit of the 16 bytes contained in
@@ -93,11 +94,15 @@ class Steganography {
      * two characters with the corresponding ASCII codes.
      */
     static String decode() {
-
-        /* To be completed */
-
-        return "";   //  delete this line after completing this method
-
+      char[] c = new char[2];
+      for (int i = 0; i < 2; i++) {
+        int n = 0;
+        for (int j = 0; j < 8; j++) {
+          n = n | (char)(block[64 * i + 8 * j + 7] << (7 - j));
+        }
+        c[i] = (char)n;
+      }
+      return new String(c);
     }// decode method
 
     /* Given a message and an image file name (without the extension),
@@ -114,9 +119,42 @@ class Steganography {
      * in the handout and terminate the program.
      */
     static void writeImage(String message, String filename) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_steg" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        if ((numCols * numRows) < ((message.length() + 6) * 8)) {
+          System.out.printf("The message is too long (%d "
+              + "characters plus 6 characters for the block count,\n",
+              message.length());
+          System.out.printf("i.e., %d bits); the image "
+              + "contains only %d pixels.\n",
+              (message.length() + 6) * 8, numCols * numRows);
+        } else {
+          String string = String.format("%06d%s",
+              message.length() / 2, message);
+          while (s.hasNext()) {
+            readBlock(s);
+            if (string.length() > 0) {
+              if (string.length() == 2) {
+                encode(string);
+                string = "";
+              } else {
+                encode(string.substring(0, 2));
+                string = string.substring(2);
+              }
+            }
+            writeBlock(w);
+          }
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// write method
 
     /* Given an image file name (without the extension), read in the
@@ -126,9 +164,30 @@ class Steganography {
      * the handout.
      */
     static void readImage(String filename) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_steg" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        skipHeader(s);
+        StringBuilder sb = new StringBuilder("");
+        for (int i = 0; i < 3; i++) {
+          readBlock(s);
+          sb.append(decode());
+        }
+        int n = Integer.parseInt(sb.toString());
+        sb = new StringBuilder("");
+        for (int i = 0; i < n; i++) {
+          readBlock(s);
+          sb.append(decode());
+        }
+        System.out.println(sb.toString());
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// read method
 
     /* This is the driver code used for testing purposes.

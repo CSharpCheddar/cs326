@@ -30,10 +30,10 @@ class ImageCipher {
      */
     static String bitsToHexString(int[] bits) {
       StringBuilder sb = new StringBuilder("");
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 32; i++) {
         int n = 0;
-        for (int j = 0; j < 32; j++) {
-          n = n | (bits[32 * i + j] << (31 - j));
+        for (int j = 0; j < 4; j++) {
+          n = n | (bits[4 * i + j] << (3 - j));
         }
         sb.append(Integer.toHexString(n).toUpperCase());
       }
@@ -58,7 +58,7 @@ class ImageCipher {
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
           for (int k = 0; k < 8; k++) {
-            array[16 * i + 8 * j + k] = (state[j][i] >> (7 - k)) & 1;
+            array[32 * i + 8 * j + k] = (state[j][i] >> (7 - k)) & 1;
           }
         }
       }
@@ -88,7 +88,7 @@ class ImageCipher {
         for (int j = 0; j < 8; j++) {
           n = n | (block[8 * i + j] << (7 - j));
         }
-        w.write(n);
+        w.printf("%3d\n", n);
       }
     }// writeBlock method
 
@@ -96,11 +96,9 @@ class ImageCipher {
      * the first four lines of the former.
      */
     static void processHeader(Scanner s, PrintWriter w) throws Exception {
-      s.useDelimiter("\\n");
       for (int i = 0; i < 4; i++) {
-        w.write(s.next());
+        w.println(s.nextLine());
       }
-      s.reset();
     }// processHeader method
 
     /* Given a file name (with no extension) for a PGM image and an
@@ -109,9 +107,23 @@ class ImageCipher {
      * adding to the input file name the string "_ECB" + EXT.
      */
     static void encryptECB(String filename, String key) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_ECB" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        while (s.hasNext()) {
+          readBlock(s);
+          block = stateToBits(AES.encrypt(bitsToHexString(block), key));
+          writeBlock(w);
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// encryptECB method
 
     /* Given a file name (with no extension) of an encrypted PGM image
@@ -120,9 +132,23 @@ class ImageCipher {
      * by adding to the input file name the string "_dec" + EXT.
     */
     static void decryptECB(String filename, String key) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_dec" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        while (s.hasNext()) {
+          readBlock(s);
+          block = stateToBits(AES.decrypt(bitsToHexString(block), key));
+          writeBlock(w);
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// decryptECB method
 
     /* given two bit strings of the same length (represented as int
@@ -130,11 +156,11 @@ class ImageCipher {
      * the bitwise XOR of the inputs.
      */
     static int[] xor(int[] s1, int[] s2) {
-
-        /* To be completed */
-
-        return null; //  delete this line after completing this method
-
+      int[] array = new int[s1.length];
+      for (int i = 0; i < s1.length; i++) {
+        array[i] = s1[i] ^ s2[i];
+      }
+      return array;
     }// xor method
 
 
@@ -143,11 +169,14 @@ class ImageCipher {
      * element is either 0 or 1.
      */
     static int[] hexStringToBits(String hex) {
-
-        /* To be completed */
-
-        return null; //  delete this line after completing this method
-
+      int[] bits = new int[128];
+      for (int i = 0; i < hex.length(); i++) {
+        int n = (int)hex.charAt(i);
+        for (int j = 0; j < 4; j++) {
+          bits[4 * i + j] = (n >> (3 - j)) & 1;
+        }
+      }
+      return bits;
     }// hexStringToBits method
 
     /* Given a file name (with no extension) for a PGM image, an AES
@@ -157,9 +186,28 @@ class ImageCipher {
      * string "_CBC" + EXT.
      */
     static void encryptCBC(String filename, String key, String IV) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_CBC" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        cipherBlock = hexStringToBits(IV);
+        while (s.hasNext()) {
+          readBlock(s);
+          block = xor(block, cipherBlock);
+          block = stateToBits(AES.encrypt(bitsToHexString(block), key));
+          for (int i = 0; i < block.length; i++) {
+            cipherBlock[i] = block[i];
+          }
+          writeBlock(w);
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// encryptCBC method
 
     /* Given a file name (with no extension) for an AES-encrypted PGM
@@ -169,9 +217,30 @@ class ImageCipher {
      * file name the string "_dec" + EXT.
      */
     static void decryptCBC(String filename, String key, String IV) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_dec" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        cipherBlock = hexStringToBits(IV);
+        while (s.hasNext()) {
+          readBlock(s);
+          int[] temp = new int[128];
+          for (int i = 0; i < block.length; i++) {
+            temp[i] = block[i];
+          }
+          block = stateToBits(AES.decrypt(bitsToHexString(block), key));
+          block = xor(block, cipherBlock);
+          cipherBlock = temp;
+          writeBlock(w);
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// decryptCBC method
 
     /* Given a file name (with no extension) for a PGM image, an AES
@@ -181,9 +250,34 @@ class ImageCipher {
      * string "_CTR" + EXT.
      */
     static void encryptCTR(String filename, String key, String counter) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_CTR" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        BigInteger b = new BigInteger(counter, 16);
+        while (s.hasNext()) {
+          readBlock(s);
+          String n = b.toString(16).toUpperCase();
+          if (n.length() < 32) {
+            for (int i = n.length(); i < 32; i++) {
+              n = "0" + n;
+            }
+          } else if (n.length() > 32) {
+            n = n.substring(0, 32);
+          }
+          cipherBlock = stateToBits(AES.encrypt(n, key));
+          block = xor(block, cipherBlock);
+          writeBlock(w);
+          b.add(new BigInteger("1"));
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// encryptCTR method
 
     /* Given a file name (with no extension) for an AES-encrypted PGM
@@ -193,9 +287,34 @@ class ImageCipher {
      * file name the string "_dec" + EXT.
      */
     static void decryptCTR(String filename, String key, String counter) {
-
-        /* To be completed */
-
+      try {
+        Scanner s = new Scanner(new File(filename + EXT), "UTF-8");
+        File newFile = new File(filename + "_dec" + EXT);
+        newFile.delete();
+        newFile.createNewFile();
+        PrintWriter w = new PrintWriter(newFile);
+        processHeader(s, w);
+        BigInteger b = new BigInteger(counter, 16);
+        while (s.hasNext()) {
+          readBlock(s);
+          String n = b.toString(16);
+          if (n.length() < 32) {
+            for (int i = n.length(); i < 32; i++) {
+              n = "0" + n;
+            }
+          } else if (n.length() > 32) {
+            n = n.substring(0, 32);
+          }
+          cipherBlock = stateToBits(AES.encrypt(n, key));
+          block = xor(block, cipherBlock);
+          writeBlock(w);
+          b.add(new BigInteger("1"));
+        }
+        w.flush();
+        w.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }// decryptCTR method
 
     /* This is the driver code used for testing purposes.

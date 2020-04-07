@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Test problem 1
+
+# Compile
+javac ImageCipher.java
+javac Steganography.java
+
+# Test no. 1
+java ImageCipher -e -ECB checker 00112233445566778899AABBCCDDEEFF
+java ImageCipher -d -ECB checker_ECB 00112233445566778899AABBCCDDEEFF
+echo "Diff 1:"
+diff checker.pgm checker_ECB_dec.pgm
+
+# Test no. 2
+java ImageCipher -e -CBC checker 00112233445566778899AABBCCDDEEFF 0123456789ABCDEFFEDCBA9876543210
+java ImageCipher -d -CBC checker_CBC 00112233445566778899AABBCCDDEEFF 0123456789ABCDEFFEDCBA9876543210
+echo "Diff 2:"
+diff checker.pgm checker_CBC_dec.pgm
+
+# Test no. 3
+java ImageCipher -e -CTR checker 00112233445566778899AABBCCDDEEFF 0123456789ABCDEFFEDCBA9876543210
+java ImageCipher -d -CTR checker_CTR 00112233445566778899AABBCCDDEEFF 0123456789ABCDEFFEDCBA9876543210
+echo "Diff 3:"
+diff checker.pgm checker_CTR_dec.pgm
+
+# Test no. 4
+java Steganography -w checker lincoln.txt
+java Steganography -r checker_steg > lincoln_stg_dec.txt
+echo "Diff 4:"
+diff lincoln.txt lincoln_stg_dec.txt
+
+# Remove junk files
+rm checker_*
+rm lincoln_stg_dec.txt
