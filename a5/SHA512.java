@@ -205,6 +205,7 @@ class SHA512 {
       if (msg.length < 300) {
         printBytes(msg, 32);
       }
+      // For some reason, the data gets slightly corrupted somewhere around here
       long[] longs = toLongs(msg);
       System.out.printf("Padded message contains %d blocks or %d longs.\n",
                         longs.length / 16, longs.length);
